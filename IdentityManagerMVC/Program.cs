@@ -1,3 +1,7 @@
+using IdentityManagerMVC.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 namespace IdentityManagerMVC
 {
     public class Program
@@ -9,6 +13,15 @@ namespace IdentityManagerMVC
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            builder.Services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+            });
+
+            //builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores();
+#if DEBUG
+            builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+#endif
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
