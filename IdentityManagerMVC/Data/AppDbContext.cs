@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using IdentityManagerMVC.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityManagerMVC.Data
@@ -9,5 +10,7 @@ namespace IdentityManagerMVC.Data
         {
 
         }
+
+        public DbSet<AppUser> AppUsers => Set<AppUser>();
     }
 }

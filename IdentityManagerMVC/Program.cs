@@ -18,7 +18,9 @@ namespace IdentityManagerMVC
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
             });
 
-            //builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores();
+            builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
+
+            
 #if DEBUG
             builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
 #endif
@@ -36,6 +38,8 @@ namespace IdentityManagerMVC
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
