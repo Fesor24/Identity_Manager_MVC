@@ -1,5 +1,7 @@
 using IdentityManagerMVC.Data;
+using IdentityManagerMVC.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityManagerMVC
@@ -18,9 +20,20 @@ namespace IdentityManagerMVC
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
             });
 
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
+            builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
-            
+
+            builder.Services.AddTransient<IMailSender, MailSender>();
+
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                options.Password.RequiredUniqueChars = 1;
+                options.Password.RequiredLength = 7;
+                options.Password.RequireLowercase = true;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(20);
+                options.Lockout.MaxFailedAccessAttempts = 3;
+            });
+
 #if DEBUG
             builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
 #endif
