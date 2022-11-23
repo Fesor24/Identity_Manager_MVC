@@ -52,7 +52,11 @@ namespace IdentityManagerMVC.Controllers
 
                 if (result.Succeeded)
                 {
-                    
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
+
+                    _mailSender.SendMail(model.Email, "Confirm email", "Please confirm your email by clicking here: <a href=\"" + callbackUrl + "\">link</a>");
+
                     await _signInManager.SignInAsync(user, false);
                     return LocalRedirect(returnUrl);
                 }
@@ -60,6 +64,20 @@ namespace IdentityManagerMVC.Controllers
                 AddError(result);
             }
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)//route values we are passing from our callbackUrl variable above
+        {
+            if (userId is null || code is null) return View("Error");
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null) return View("Error");
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+
+            return View(result.Succeeded ? "ConfirmEmail" : "Error");
         }
 
 
