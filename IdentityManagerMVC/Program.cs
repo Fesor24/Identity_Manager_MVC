@@ -34,6 +34,12 @@ namespace IdentityManagerMVC
                 options.Lockout.MaxFailedAccessAttempts = 3;
             });
 
+            builder.Services.AddAuthentication().AddFacebook(options =>
+            {
+                options.AppId = "3150243078600223";
+                options.AppSecret = "c5532c26a676472403015dda486bf7cb";
+            });
+
 #if DEBUG
             builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
 #endif

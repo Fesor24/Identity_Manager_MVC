@@ -1,0 +1,41 @@
+﻿@model ExternalLoginConfirmationViewModel
+
+<h1 class="alert alert-info">Register</h1>
+<h3>Associate your @ViewData["ProviderDisplayName"] account</h3>
+
+<form asp-controller="Account" asp-action="ExternalLoginConfirmation" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" role="form">
+    <h4>Link account</h4>
+    <hr />
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <p>
+        You've successfully autheticated with <strong>@ViewData["ProviderDisplayName"]</strong>.
+        Please fill form below to complete registration process
+    </p>
+
+    <div class="form-group">
+        <label asp-for="Email" class="col-md-4"></label>
+        <div class="col-md-8">
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Name" class="col-md-4"></label>
+        <div class="col-md-8">
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+    </div>
+
+
+
+    <div class="form-group mt-3">
+        <div class="col-md-3">
+            <button class="btn btn-secondary form-control" type="submit">Register</button>
+        </div>
+    </div>
+
+</form>
