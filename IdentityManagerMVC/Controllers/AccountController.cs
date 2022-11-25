@@ -295,6 +295,46 @@ namespace IdentityManagerMVC.Controllers
             
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EnableAuthenticator()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            //to reset any previous authentication key for the user
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+
+            var token = await _userManager.GetAuthenticatorKeyAsync(user);
+            var model = new TwoFactorAuthenticationViewModel { Token = token };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EnableAuthenticator(TwoFactorAuthenticationViewModel model)
+        {
+            var token = _userManager.Options.Tokens.AuthenticatorTokenProvider;
+
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var succeeded = await _userManager.VerifyTwoFactorTokenAsync(user, token, model.Code);
+
+                if (succeeded)
+                {
+                    await _userManager.SetTwoFactorEnabledAsync(user, true);
+                }
+                else
+                {
+                    ModelState.AddModelError(String.Empty, "An error occurred while processing two factor auth");
+                    return View(model);
+                }
+
+            }
+
+            return RedirectToAction("AuthenticatorConfirmation");
+        }
+
+
         private void AddError(IdentityResult result)
         {
             foreach(var error in result.Errors)
