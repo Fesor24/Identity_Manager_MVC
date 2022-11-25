@@ -1,22 +1,29 @@
 ﻿using IdentityManagerMVC.Models;
 using IdentityManagerMVC.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace IdentityManagerMVC.Controllers
 {
+    [Authorize]
     public class AccountController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IMailSender _mailSender;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,
+        public AccountController(UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<IdentityUser> signInManager,
             IMailSender mailsender)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _signInManager = signInManager;
             _mailSender = mailsender;
         }
@@ -26,16 +33,42 @@ namespace IdentityManagerMVC.Controllers
         }
 
         [HttpGet]
-        public IActionResult Register(string? returnUrl = null)
+        [AllowAnonymous]
+        public async Task<IActionResult> Register(string? returnUrl = null)
         {
+            if(!await _roleManager.RoleExistsAsync("Admin"))
+            {
+                //typically we create roles by seeding the data but lets do it different here
+                await _roleManager.CreateAsync(new IdentityRole("Admin"));
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            List<SelectListItem> listItems = new List<SelectListItem>();
+
+            listItems.Add(new SelectListItem
+            {
+                Value = "Admin",
+                Text = "Admin"
+            });
+
+            listItems.Add(new SelectListItem
+            {
+                Value = "User",
+                Text = "User"
+            });
+
             ViewData["ReturnUrl"] = returnUrl;
-            RegisterViewModel rvm = new RegisterViewModel();
+            RegisterViewModel rvm = new RegisterViewModel()
+            {
+                RoleList = listItems
+            };
 
             return View(rvm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -53,6 +86,15 @@ namespace IdentityManagerMVC.Controllers
 
                 if (result.Succeeded)
                 {
+                    if(model.RoleSelected is not null && model.RoleSelected.Length > 0 && model.RoleSelected is "Admin")
+                    {
+                        await _userManager.AddToRoleAsync(user, "Admin");
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(user, "User");
+                    }
+
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: HttpContext.Request.Scheme);
 
@@ -64,10 +106,28 @@ namespace IdentityManagerMVC.Controllers
 
                 AddError(result);
             }
+
+            List<SelectListItem> listItems = new List<SelectListItem>();
+
+            listItems.Add(new SelectListItem
+            {
+                Value = "Admin",
+                Text = "Admin"
+            });
+
+            listItems.Add(new SelectListItem
+            {
+                Value = "User",
+                Text = "User"
+            });
+
+            model.RoleList = listItems;
+
             return View(model);
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string userId, string code)//route values we are passing from our callbackUrl variable above
         {
             if (userId is null || code is null) return View("Error");
@@ -83,6 +143,7 @@ namespace IdentityManagerMVC.Controllers
 
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -93,6 +154,7 @@ namespace IdentityManagerMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
@@ -137,6 +199,7 @@ namespace IdentityManagerMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
             if (ModelState.IsValid)
@@ -160,6 +223,7 @@ namespace IdentityManagerMVC.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult ForgotPasswordConfirmation()
         {
             return View();
@@ -167,6 +231,7 @@ namespace IdentityManagerMVC.Controllers
 
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult ResetPassword(string? code = null)
         {
             return code == null ? View("Error") : View();
@@ -175,6 +240,7 @@ namespace IdentityManagerMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
             if (ModelState.IsValid)
@@ -196,6 +262,7 @@ namespace IdentityManagerMVC.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult ResetPasswordConfirmation()
         {
             return View();
@@ -203,6 +270,7 @@ namespace IdentityManagerMVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public IActionResult ExternalLogin(string provider, string? returnUrl= null)//we are receiving the returnurl and the provider name which we set as the value in the login page
         {
             //if it is successful, this is the url we will be redirecting to
@@ -217,6 +285,7 @@ namespace IdentityManagerMVC.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> ExternalLoginCallback(string? returnUrl= null, string? remoteError = null)
         {
             returnUrl = returnUrl ?? Url.Content("~/");
@@ -270,6 +339,7 @@ namespace IdentityManagerMVC.Controllers
 
                 if (result.Succeeded)
                 {
+                    await _userManager.AddToRoleAsync(user, "User");
                     result = await _userManager.AddLoginAsync(user, info);
 
                     if (result.Succeeded)

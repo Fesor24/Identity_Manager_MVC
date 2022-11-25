@@ -7,7 +7,22 @@
     @if(User.Identity.IsAuthenticated){
         <a asp-action="EnableAuthenticator" asp-controller="Account">Setup Two Factor Auth</a>
         <br />
+
+
+
+
+        @*To show current user role*@
+        @if (User.IsInRole("Admin"))
+        {
+            <p>Your role is Admin</p>
+        }
+        else
+        {
+            <p>Your role is user</p>
+        }
     }
+
+    
 
 
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>

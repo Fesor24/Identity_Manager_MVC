@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace IdentityManagerMVC.Models
 {
@@ -22,5 +23,9 @@ namespace IdentityManagerMVC.Models
 
         [Required(ErrorMessage ="Please include your name")]
         public string Name { get; set; } = string.Empty;
+
+        public IEnumerable<SelectListItem>? RoleList { get; set; }
+
+        public string RoleSelected { get; set; } = string.Empty;
     }
 }
